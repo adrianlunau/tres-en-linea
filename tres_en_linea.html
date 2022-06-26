@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tres en linea</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            width: 240px;
+            margin: 100px auto 50px;
+        }
+
+
+        .cuadrante {
+            width: 80px;
+            height: 80px;
+            border: 1px solid black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+        }
+
+        .button {
+            padding: 5px;
+            cursor: pointer;
+            border: 1px solid black;
+
+        }
+
+        .container-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2em;
+        }
+
+        .container-dificultad {
+            margin: 10px auto;
+            width: 200px;
+            height: 2em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2em;
+        }
+
+        .ganador {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 2em;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div class="container">
+            <div id="1" class="cuadrante" v-on:click="pintarX(0, 0)"> {{panel[0][0]}}</div>
+            <div id="2" class="cuadrante" v-on:click="pintarX(0, 1)"> {{panel[0][1]}}</div>
+            <div id="3" class="cuadrante" v-on:click="pintarX(0, 2)"> {{panel[0][2]}}</div>
+            <div id="4" class="cuadrante" v-on:click="pintarX(1, 0)"> {{panel[1][0]}}</div>
+            <div id="5" class="cuadrante" v-on:click="pintarX(1, 1)"> {{panel[1][1]}}</div>
+            <div id="6" class="cuadrante" v-on:click="pintarX(1, 2)"> {{panel[1][2]}}</div>
+            <div id="7" class="cuadrante" v-on:click="pintarX(2, 0)"> {{panel[2][0]}}</div>
+            <div id="8" class="cuadrante" v-on:click="pintarX(2, 1)"> {{panel[2][1]}}</div>
+            <div id="9" class="cuadrante" v-on:click="pintarX(2, 2)"> {{panel[2][2]}}</div>
+        </div>
+        
+        <div class="container-info">
+            <div>Jugador: {{ jugador }}</div>
+            <div>Maquina: {{ maquina }}</div>
+            <div class="button" v-on:click="jugarDeNuevo()">Jugar de nuevo</div>
+        </div>
+        <div class="container-dificultad">
+            <div>Nivel: {{ dificultad }} </div>
+            <div class="button" v-on:click="cambiarDificultad()">Cambiar</div>
+        </div>
+        <div class="ganador"> {{ ganador }} </div>
+
+
+        <div>{{ variable }}</div>
+
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script>
+        const app = new Vue({
+            el: '#app',
+            data: {
+                panel: [
+                    ["", "", ""],
+                    ["", "", ""],
+                    ["", "", ""]
+                ],
+                dificultad: "Fácil",
+                variable: "",
+                jugador: 0,
+                maquina: 0,
+                ganador: "",
+                fin: false,
+                primerMov: true,
+            },
+            methods: {
+                cambiarDificultad() {
+                    if (this.dificultad == "Fácil") {
+                        this.dificultad = "Dificil"
+                    } else {
+                        this.dificultad = "Fácil"
+                    }
+                },
+                pintarX(x, y) {
+                    if (this.panel[x][y] == "" && !this.fin) {
+                        this.panel[x][y] = 'X';
+                        this.fin = this.chequearGanador();
+                        this.variable += ' ';
+                        if (!this.fin && this.dificultad == "Fácil") {
+                            this.juegaMaquina();
+                        } else if (!this.fin) {
+                            this.juegaMaquinaDificil();
+                        }
+                    }
+                },
+                pintarO(x, y) {
+                    this.panel[x][y] = 'O';
+                    this.variable += ' ';
+                },
+                juegaMaquina() {
+                    let indice1 = Math.floor(Math.random() * (3))
+                    let indice2 = Math.floor(Math.random() * (3))
+
+                    if (this.panel[indice1][indice2] == "") {
+                        this.estaPorGanarX()
+                        this.pintarO(indice1, indice2);
+                        this.fin = this.chequearGanador();
+                    } else {
+                        this.juegaMaquina();
+                    }
+                },
+                juegaMaquinaDificil() {
+                    console.log("Modo dificil");
+                    if (this.primerMov) {
+                        if (this.panel[1][1] == "") {
+                            this.panel[1][1] = "O";
+                            this.primerMov = false;
+                        } else {
+                            this.juegaMaquina();
+                            this.primerMov = false;
+                        }
+                    } else if (this.estaPorGanarX()) {
+                        let pos = this.estaPorGanarX();
+                        this.panel[pos[0]][pos[1]] = 'O';
+                    } else {
+                        let array = this.puedeGanarX();
+                        if (array.length) {
+                            this.panel[array[0][0]][array[0][1]] = "O";
+                        }
+                        
+                        //this.juegaMaquina(); // aca iria la logica para intentar ganar
+                    }
+
+                },
+                estaPorGanarX() {
+                    // Verifica que X no este por ganar en eje horizontal
+                    for (let i = 0; i < 3; i++) {
+                        let cantX = 0;
+                        for (let j = 0; j < 3; j++) {
+                            if (this.panel[i][j] == "X") {
+                                cantX++;
+                            }
+                        }
+                        let vacio = this.panel[i].indexOf("");
+                        if (cantX == 2 && vacio >= 0) {
+                            console.log("Esta por ganar x, poner valor en: " + [i, vacio]);
+                            return [i, vacio];
+                        }
+                    }
+
+                    // Verifica que X no este por ganar en eje vertical
+                    for (let i = 0; i < 3; i++) {
+                        let cantY = 0;
+                        let vacioY = [];
+                        for (let j = 0; j < 3; j++) {
+                            if (this.panel[j][i] == "X") {
+                                cantY++;
+                            }
+                            if (this.panel[j][i] == "") {
+                                vacioY.push(j);
+                                vacioY.push(i);
+                            }
+                            if (cantY == 2 && vacioY.length) {
+                                console.log("Esta por ganar x, poner valor en: " + vacioY[0] + ", " + vacioY[
+                                    1]);
+                                return vacioY;
+                            }
+                        }
+                    }
+
+                    // Verifica que X no este por ganar en eje diagonal
+                    if (this.panel[1][1] == "X") {
+
+                        if (this.panel[0][0] == "X" && this.panel[2][2] == "") {
+                            console.log("Esta por ganar x, poner valor en: 2, 2");
+                            return [2, 2]
+                        }
+                        if (this.panel[2][2] == "X" && this.panel[0][0] == "") {
+                            console.log("Esta por ganar x, poner valor en: 0, 0");
+                            return [0, 0]
+                        }
+                        if (this.panel[0][2] == "X" && this.panel[2][0] == "") {
+                            console.log("Esta por ganar x, poner valor en: 2, 0");
+                            return [2, 0]
+                        }
+                        if (this.panel[2][0] == "X" && this.panel[0][2] == "") {
+                            console.log("Esta por ganar x, poner valor en: 0, 2");
+                            return [0, 2]
+                        }
+                    }
+
+                    return false;
+
+                },
+                puedeGanarX() {
+                    for (let i = 0; i < 3; i++) {
+                        let cantO = [];
+                        let cantVacio = [];
+                        for (let j = 0; j < 3; j++) {
+                            if (this.panel[i][j] == "O") {
+                                cantO.push([i,j]);
+                            }
+                            if (this.panel[i][j] == "") {
+                                cantVacio.push([i,j]);
+                            }
+                        }
+                        //let vacio = this.panel[i].indexOf("");
+                        if (cantO.length == 2 && cantVacio.length == 1) {
+                            console.log("Gana colocando O en " + [i, vacio]);
+                            return cantVacio;
+                        }
+                        if (cantO.length == 1 && cantVacio.length == 2) {
+                            console.log("Tiene fila libre n°" + i);
+
+                            return cantVacio;
+                        }
+                    }
+                    return false;
+                },
+                chequearGanador() {
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            if (this.panel[i][j]) {
+                                if (this.verificarFila(i, this.panel[i][j])) {
+                                    console.log("Gano: " + this.panel[i][j]);
+                                    if (this.panel[i][j] == "X") {
+                                        this.jugador++
+                                        this.ganador = "GANASTE"
+                                    } else {
+                                        this.maquina++
+                                        this.ganador = "PERDISTE"
+                                    }
+                                    return true;
+                                }
+                                if (this.verificarColumna(j, this.panel[i][j])) {
+                                    console.log("Gano: " + this.panel[i][j]);
+                                    if (this.panel[i][j] == "X") {
+                                        this.jugador++
+                                        this.ganador = "GANASTE"
+                                    } else {
+                                        this.maquina++
+                                        this.ganador = "PERDISTE"
+                                    }
+                                    return true;
+                                }
+                                if (this.panel[1][1]) {
+                                    if (this.verificarDiagonal()) {
+                                        console.log("Gano: " + this.panel[1][1]);
+                                        if (this.panel[1][1] == "X") {
+                                            this.jugador++
+                                            this.ganador = "GANASTE"
+                                        } else {
+                                            this.maquina++
+                                            this.ganador = "PERDISTE"
+                                        }
+                                        return true;
+                                    }
+                                }
+                            }
+
+                        }
+
+                    }
+                    return false
+                },
+                verificarFila(x, signo) {
+                    let cantX = 0;
+                    this.panel[x].forEach(e => {
+                        if (e == signo) {
+                            cantX++;
+                        }
+                    })
+                    if (cantX == 3) {
+                        return true;
+                    }
+                    return false;
+                },
+                verificarColumna(y, signo) {
+                    let cantY = 0;
+                    for (let i = 0; i < 3; i++) {
+                        if (this.panel[i][y] == signo) {
+                            cantY++;
+                        }
+                    }
+                    if (cantY == 3) {
+                        return true;
+                    }
+                    return false;
+                },
+                verificarDiagonal() {
+                    let p = this.panel
+                    if (p[0][0] == p[1][1] && p[1][1] == p[2][2] || p[2][0] == p[1][1] && p[1][1] == p[0][2]) {
+                        return true;
+                    }
+                    return false;
+                },
+                jugarDeNuevo() {
+                    this.panel = [
+                        ["", "", ""],
+                        ["", "", ""],
+                        ["", "", ""]
+                    ]
+                    this.fin = false;
+                    this.primerMov = true;
+                    this.ganador = "";
+                }
+
+
+            }
+        })
+    </script>
+</body>
+
+</html>
