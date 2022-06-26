@@ -31,11 +31,20 @@
             font-size: 3em;
         }
 
+        .cuadrante:hover {
+            background-color: rgb(248, 248, 248);
+        }
+
         .button {
             padding: 5px;
             cursor: pointer;
             border: 1px solid black;
 
+        }
+
+        .button:hover {
+            background-color: black;
+            color: white;
         }
 
         .container-info {
@@ -76,7 +85,7 @@
             <div id="8" class="cuadrante" v-on:click="pintarX(2, 1)"> {{panel[2][1]}}</div>
             <div id="9" class="cuadrante" v-on:click="pintarX(2, 2)"> {{panel[2][2]}}</div>
         </div>
-        
+
         <div class="container-info">
             <div>Jugador: {{ jugador }}</div>
             <div>Maquina: {{ maquina }}</div>
@@ -158,16 +167,20 @@
                             this.juegaMaquina();
                             this.primerMov = false;
                         }
+                    } else if (this.puedeGanar().length > 0) {
+                        let array = this.puedeGanar();
+                        console.log(array);
+                        if (array) {
+                            this.panel[array[0]][array[1]] = "O";
+                            this.chequearGanador()
+                        }
+
                     } else if (this.estaPorGanarX()) {
                         let pos = this.estaPorGanarX();
                         this.panel[pos[0]][pos[1]] = 'O';
+                        this.chequearGanador()
                     } else {
-                        let array = this.puedeGanarX();
-                        if (array.length) {
-                            this.panel[array[0][0]][array[0][1]] = "O";
-                        }
-                        
-                        //this.juegaMaquina(); // aca iria la logica para intentar ganar
+                        this.juegaMaquina(); 
                     }
 
                 },
@@ -231,30 +244,69 @@
                     return false;
 
                 },
-                puedeGanarX() {
+                puedeGanar() {
+                    // En horizontal
                     for (let i = 0; i < 3; i++) {
                         let cantO = [];
                         let cantVacio = [];
                         for (let j = 0; j < 3; j++) {
                             if (this.panel[i][j] == "O") {
-                                cantO.push([i,j]);
+                                cantO.push([i, j]);
                             }
                             if (this.panel[i][j] == "") {
-                                cantVacio.push([i,j]);
+                                cantVacio.push(i);
+                                cantVacio.push(j);
                             }
                         }
                         //let vacio = this.panel[i].indexOf("");
-                        if (cantO.length == 2 && cantVacio.length == 1) {
-                            console.log("Gana colocando O en " + [i, vacio]);
-                            return cantVacio;
-                        }
-                        if (cantO.length == 1 && cantVacio.length == 2) {
-                            console.log("Tiene fila libre n°" + i);
-
+                        if (cantO.length == 2 && cantVacio.length == 2) {
+                            console.log("Gana horizontal colocando O en " + cantVacio);
                             return cantVacio;
                         }
                     }
+
+                    // En vertical
+                    for (let i = 0; i < 3; i++) {
+                        let cantY = 0;
+                        let vacioY = [];
+                        for (let j = 0; j < 3; j++) {
+                            if (this.panel[j][i] == "O") {
+                                cantY++;
+                            }
+                            if (this.panel[j][i] == "") {
+                                vacioY.push(j);
+                                vacioY.push(i);
+                            }
+                            if (cantY == 2 && vacioY.length) {
+                                console.log("Gana vertical colocando O en: " + vacioY[0] + ", " + vacioY[1]);
+                                return vacioY;
+                            }
+                        }
+                    }
+
+                    // En diagonal
+                    if (this.panel[1][1] == "O") {
+
+                        if (this.panel[0][0] == "O" && this.panel[2][2] == "") {
+                            console.log("Gana vertical colocando O en: 2, 2");
+                            return [2, 2]
+                        }
+                        if (this.panel[2][2] == "O" && this.panel[0][0] == "") {
+                            console.log("Gana vertical colocando O en: 0, 0");
+                            return [0, 0]
+                        }
+                        if (this.panel[0][2] == "O" && this.panel[2][0] == "") {
+                            console.log("Gana vertical colocando O en: 2, 0");
+                            return [2, 0]
+                        }
+                        if (this.panel[2][0] == "O" && this.panel[0][2] == "") {
+                            console.log("Gana vertical colocando O en: 0, 2");
+                            return [0, 2]
+                        }
+                    }
+
                     return false;
+
                 },
                 chequearGanador() {
                     for (let i = 0; i < 3; i++) {
